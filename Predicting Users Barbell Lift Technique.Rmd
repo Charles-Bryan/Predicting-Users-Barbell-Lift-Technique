@@ -3,7 +3,7 @@ title: "Predicting Users' Barbell Lift Technique"
 author: "Charles Bryan"
 date: "11/7/2019"
 output:
-  github_document:
+  html_document:
     toc: true
 ---
 
