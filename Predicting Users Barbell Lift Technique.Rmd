@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Synopsis
 
-The task here is to determine how barbell lifts were performed based on measurements taken from the participants doing the exercise. The barbell lifts were performed in 5 different ways by different participants where 4 of the ways were incorrect in some common manner. After looking at the provided training data we can see that many columns are left empty or NA, so we split the training data into two separate sets: one set with almost all columns containing data and one set with most columns containing NA or no data. We clean up the data and then perform random forests on the two sets. Both training models perform perfectly on their own training sets, however, they differ on the provided test set. The model trained on the larger training set performed perfectly on the provided test set, while the second model only gets 75% correct. This is likely because the large difference in observations used to train each model: 19216 for model 1 and only 406 for model 2.
+The task here is to determine how barbell lifts were performed based on measurements taken from the participants doing the exercise. The barbell lifts were performed in 5 different ways by different participants where 4 of the ways were incorrect in some common manner. After looking at the provided training data it is apparent that many columns are left empty or NA, so the training data is split into two separate sets: one set with almost all columns containing data and one set with most columns containing NA or no data. Next the data is cleaned and random forests is run on the two sets. Both training models perform perfectly on their own training sets, however, they differ on the provided test set. The model trained on the larger training set performed perfectly on the provided test set, while the second model only gets 75% correct. This is likely because the large difference in observations used to train each model: 19216 for model 1 and only 406 for model 2.
 
 ## Setup
 ```{r echo = TRUE, results = 'hide', message=FALSE}
@@ -33,10 +33,10 @@ set.seed(123)
 
 ***
 ## Data Retrieval
-First we import the training and test data provided here:
+First the training and test data provided below is imported:
 http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har
 
-Citation:
+**Citation:**
 Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6.
 ```{r}
 if(!file.exists("./data")){dir.create("./data")}
@@ -62,7 +62,7 @@ testing_raw <- read.csv(TestfileName)
 
 <br>
 
-The test data provided is not time sequential, as in we cannot use multiple observations together to predict the exercise. Based on this, no time related columns are going to be helpful. Therefore, we remove these columns from both the training and testing sets.
+The test data provided is not time sequential, as in multiple observations can not be used together to predict the exercise method. Based on this, no time related columns are going to be helpful. Therefore, these columns are removed from both the training and testing sets.
 ```{r cache = TRUE}
 training_sub <- subset(training_raw,select=-c(X, user_name,raw_timestamp_part_1,
                                               raw_timestamp_part_2,
@@ -85,7 +85,7 @@ vis_miss(training_temp, warn_large_data = FALSE)
 <br>
 
 This data set has a few different types of errors:  Occurrences of "", NA, and DIV/0.
-In total we have 19622 observations. Exactly 19216 of these rows have either "" or NA in many of the cells while the remaining 406 observations have DIV/0 errors in some of their cells. It appears that for these 406 rows additional information was calculated and the method used to calculate some values gave a DIV/0 error in those cases. 
+In total there are 19622 observations. Exactly 19216 of these rows have either "" or NA in many of the cells while the remaining 406 observations have DIV/0 errors in some of their cells. It appears that for these 406 rows additional information was calculated and the method used to calculate some values gave a DIV/0 error in those cases. 
 ```{r}
 na_rows <- apply(training_temp, 1, function(r) any(r %in% c(NA)))
 
@@ -106,11 +106,11 @@ training_sub_div <- training_temp[!na_rows,]
 
 <br>
 
-Now we clean up the data some:
+Now to clean up the data some:
 
-* We filter out columns that only have 1 value since this information is not helpful in classification. 
-* We convert all columns other than the classe label into numeric variables.
-* In the training_sub_div dataset we convert the "DIV/0!" error into NA to more easily work with.
+* Filter out columns that only have 1 value since this information is not helpful in classification. 
+* Convert all columns other than the classe label into numeric variables.
+* In the training_sub_div dataset, convert the "DIV/0!" error into NA to more easily work with.
 ```{r}
 # Update Factor Levels based on the current dataframe, not the original
 training_sub_na[] <- lapply(training_sub_na, function(x) if(is.factor(x)) factor(x) else x)
@@ -133,14 +133,14 @@ training_sub_div <- training_sub_div[, sapply(training_sub_div, function(col){
 
 <br>
 
-We can see below that we are still missing some values in the training_sub_div dataset.
+Some values in the training_sub_div dataset are still missing as shown below:
 ```{r cache = TRUE}
 vis_miss(training_sub_div, warn_large_data = FALSE)
 ```
 
 <br>
 
-These rows with missing data make up a significant portion of the 406 observations in this set, so we would prefer to not remove these rows. These missing values are numeric, so we try to impute the values using default knn.
+These rows with missing data make up a significant portion of the 406 observations in this set, so idealy they would not be removed. These missing values are numeric, so imputing the values using default knn is appropriate.
 ```{r}
 training_sub_div_clean <- knnImputation(training_sub_div, k = 10, scale = T, 
                                         meth = "weighAvg", distData = training_sub_div)
@@ -148,7 +148,7 @@ training_sub_div_clean <- knnImputation(training_sub_div, k = 10, scale = T,
 
 <br>
 
-As we did before we will clean up this dataset of any columns that have only one value and also convert all features to numeric other than the classe labels.
+As before, the dataset is cleaned of any columns that have only one value and also  all features are converted to numeric other than the classe labels.
 ```{r}
 # Convert all but the classe label from Factor to numeric
 names_div <- colnames(training_sub_div_clean)
@@ -164,7 +164,7 @@ training_sub_div_clean <- training_sub_div_clean[, sapply(training_sub_div_clean
 <br>
 
 I used the following method to plot histograms of each variable to visually find any outliers. Unfortunately due to the amount of features the plot does not fit well in one viewing.
-```{r, echo=TRUE, include=FALSE, cache = TRUE}
+```{r, echo=TRUE,  eval=FALSE}
  training_sub_div_clean %>%
   keep(is.numeric) %>%
   gather() %>%
@@ -175,14 +175,14 @@ I used the following method to plot histograms of each variable to visually find
 
 <br>
 
-Rather than showing all of the feature plots, below is one such histogram. Because the x-axis goes so far to the right with all of the data focused on the far left, we know to inspect the data. It turns out for this feature almost all of the data is beneath the value 60 with a couple of extremely high outliers in the tens of thousands.
+Rather than showing all of the feature plots, below is one such histogram. The plot has almost all points clustered to the far right with just a couple points far to the right. Therefore this feature should be further investigated for outliers. It turns out for this feature almost all of the data is beneath the value 60 with a couple of extremely high outliers in the tens of thousands.
 ```{r}
 ggplot(data=training_sub_div_clean, aes(x=var_yaw_belt)) + geom_histogram()
 ```
 
 <br>
 
-Based on the plots and further inspecting the data, we filter out some outliers of each dataset using the following criteria:
+Based on the plots and further inspecting the data, some outliers of each dataset are filtered using the following criteria:
 ```{r}
 training_na_filter <- training_sub_na %>%
   filter(magnet_belt_x < 350) %>%
@@ -228,18 +228,18 @@ training_div_filter <- training_sub_div_clean %>%
 
 <br>
 
-While it was not taken into account during the data cleaning, the testing set has many rows that are entirely NA. This makes them unusable for classification. First we determine which columns are usable in the testing set.
+While it was not taken into account during the data cleaning, the testing set has many rows that are entirely NA. This makes them unusable for classification. First the usable columns in the testing set are determined.
 ```{r}
 testing_columns <- colnames(testing_sub[1,!sapply(testing_sub, function(x)all(is.na(x)))])
 length(testing_columns)
 ```
-We see that only 53 of the original columns are actually usable.
+Only 53 of the original columns are actually usable.
 
 <br>
 
-We will build two models, both of which using random forests and 10-fold cross validation.
+Two models are built using using random forests and 10-fold cross validation.
 
-modFit1 will be using our large dataset of 19216 observations which removed all of the features that contained NAs. We only train the model with the columns that this set and the testing set share.
+modFit1 will be using the large dataset of 19216 observations which removed all of the features that contained NAs. The model is only trained with the columns shared between this set and the testing set.
 ```{r Train Model1 on Large Dataset, cache=TRUE}
 training_na_columns <- colnames(training_na_filter)
 training_na_intersection <- intersect(testing_columns, training_na_columns)
@@ -265,7 +265,7 @@ modFit1$finalModel$confusion
 
 <br>
 
-Similarly we build modFit2 using the dataset of 406 observations and 10-fold cross validation. This dataset has the additional columns that were not present for the 19216 observations above. However, we can only train the model on features shared between this dataset and the testing set.
+Similarly modFit2 is built using the dataset of 406 observations and 10-fold cross validation. This dataset has the additional columns that were not present for the 19216 observations above. However, the model can only be trained on features shared between this dataset and the testing set.
 ```{r Train Model2 on Smaller Dataset, cache=TRUE}
 training_div_columns <- colnames(training_div_filter)
 training_div_intersection <- intersect(testing_columns, training_div_columns)
@@ -278,7 +278,7 @@ modFit2 <- train(classe~.,
 training_predict2 <- predict(modFit2)
 sum(training_predict2 == training_div_filter[,"classe"])/length(training_predict2)
 ```
-This model had a perfect accuracy on its training set of 406 observations, however, we can see that we have a high OOB estimate of  error rate: 21.04%.
+This model had a perfect accuracy on its training set of 406 observations, however, it has a high OOB estimate of error rate: 21.04%.
 
 <br>
 
@@ -289,7 +289,7 @@ modFit2$finalModel$confusion
 
 <br>
 
-Now we run each of our models on the testing set.
+Each model is now run on the testing set.
 ```{r Predict testing data using both models}
 testing_predict1 <- predict(modFit1, newdata = testing_sub[,training_na_intersection])
 testing_predict2 <- predict(modFit2, newdata = testing_sub[,training_div_intersection])
@@ -297,7 +297,7 @@ testing_predict2 <- predict(modFit2, newdata = testing_sub[,training_div_interse
 
 <br>
 
-We can check to see if our two models predicted different results.
+The results our two models' predictions can be compared.
 ```{r}
 sum(testing_predict1==testing_predict2)/length(testing_predict1)
 ```
