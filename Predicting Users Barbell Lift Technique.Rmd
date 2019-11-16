@@ -2,13 +2,11 @@
 title: "Predicting Users' Barbell Lift Technique"
 author: "Charles Bryan"
 date: "11/7/2019"
-output:
-  html_document:
-    toc: true
+output:  html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 ## Synopsis
@@ -255,7 +253,7 @@ modFit1 <- train(classe~.,
 training_predict1 <- predict(modFit1)
 sum(training_predict1 == training_na_filter[,"classe"])/length(training_predict1)
 ```
-This model had a perfect accuracy on its training set of 19216 observations with a very low OOB estimate of  error rate of 0.44%.
+This model had almost perfect accuracy on its training set of 19216 observations with a very low OOB estimate of  error rate of 0.44%.
 
 <br>
 
